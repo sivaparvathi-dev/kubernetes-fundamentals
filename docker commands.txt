@@ -1,0 +1,196 @@
+docker attach containerid ------- it will start the conatiner,but once execute exit commands it will stop
+---------------------------------------
+docker build --compress .   -----it will generate the image from Dockerfile which is in current directory with compressed size in 
+
+docker build -f filename .   ----it will generate the image from dockerfilenamed filename which is in current directory
+
+docker build --no-cache       ----it wont store the images to docker daemon
+
+docker build --pull   ----will always take the imge from repository
+--------
+
+docker commit containerid  username/imagename:latest(or any tag) ------------will create image from running container
+
+-----------
+
+docker cp localfileorfolder  containerid:/ --copy localfiles ar folder to running container
+
+docker cp containerid:/ filenme   ----copy files to local system
+
+------
+docker create -it image /bin/bash             ---it will create the container but not start it
+docker start containerid  ----------it will start the container
+---------
+docker diff containerid  ---inspect changes to files or directories on a container filesystem
+
+------------------
+docker events  -----will give list of realtime events from the server
+
+-------
+docker exec -it containerid /bin/bash   --used to get into to container
+docker exec -d containerid command  --used to run new commands{ex: docker exec -d containerid touch a b c-it will create files a b c in container}
+-------------------
+docker export containerid  >filename.tar         ---to export container's filessystem as tar archive
+
+docker import filename.tar    ---it will create filesystem image from the tar file
+
+-------------------------------
+docker history imageid  --will show the history of image
+
+------
+docker images
+docker images -aq
+docker images -q -f "dangling=true" -----it will list all the dangling images(intermediate layers while building image are called dangling images)
+---------------------------
+docker info ---will give system level info like howmnay containers,images,n/w ---etc
+
+docker inspect imagename  -----will give info at docker object's level
+
+docker kill containerid ---kill the container[it will immediatly stop the container  signal 9]
+
+docker stop containerid ----stop the container [will give sometime for mainprocess to complete all the tasks and then stops the container signal 9]
+-------------------------
+docker save imagename > filename.tar
+docker load --input filename.tar
+
+docker export/import is used to create image from container's filesystem and viseversa 
+docker save/load is used to create image tar file from docker image and viceversa[senario when we dont have access to docker repo we can create tar file from image and then move that tar file to github and then pull that image by untarring in another machine]
+
+-----------------
+docker login -u username -p password 
+docker logout
+
+------------------
+docker logs containerid
+
+--------------------
+docker pause containerid  --all the processes of the container will be paused
+docker unpause containerid --to unpause
+--------------
+docker port --to list port mappings
+------
+docker ps
+docker ps -a
+docker ps -aq
+--------------------------
+docker pull imagename ---will just pull the image from hub .it wont create container
+docker push imagename  ---will push the image to hub
+-----------
+docker rename containername newname
+-------------------
+docker search imagename  ---  will search for image in hub
+docker search imgename --filter stars=3 --it will list image with 3stars
+-----------------
+docker stats----it will give live stream of containers resource usage statics like CPU,MEMORY etc
+----------------
+docker tag imageid newimagename/shjsj:tag(it may be empty or any value like 1.0,1.1 ---)  ----will create tag target-image that refers to source image
+
+---------------------------------
+docket top containerid ---to list all the processes running inside a container
+-------------------------
+docker update -m 300m containerid----it will update configurations of a container
+--------
+docker version
+-------
+docker wait containerid ------------wait until one or more containers stop and then print their exit code
+
+-------------------------------------------------
+
+Multistage dockerfile will be used to reduce image size
+
+---------------------
+COPY . /path  :  it will copy files from local host's current directory  to container
+RUN : it is used to install packages inside container,it is a compile time instruction,multiple RUN commands we can use in a dockerfile.EX: RUN yum install wget -y
+
+CMD :it will provide defaults for an executing container,it is a runtime intsruction
+
+ENTRYPOINT  : allows to configure container to run as executable,it is also a runtume instruction
+
+Difference between CMD and ENTRYPOINT
+1.The parameters of the CMD cand be overriden where as for ENTRYPOINT we can't(it can only append the user entered parameters)
+vi Dockerfile
+FROM centos
+CMD ["ls","-ls"]
+
+docker build . -t image-cmd
+docker run -it image-cmd ls -a  --- it will make the CMD command in Dockerfile as ls -a from ls -ls
+
+vi Dockerfile
+
+FROM centos
+ENTRYPOINT ["ls","-ls"]
+
+docker build . -t image-entrypoint
+docker run -it image-entrypoint ls -a  --- it will make the ENTRYPOINT command in Dockerfile as ls -lsa from ls -ls
+
+----
+2.if multiple CMD entries are there it will consider only last CMD
+
+---------------------------------------------------------
+
+DOCKER VOLUMES
+since docker containers are emphemeral(means when we data will lost when containers are removed)
+
+docker volume create --name volumename
+
+docker volume inspect volumename  
+docker volume ls
+
+we can attach the volume to conatiner while cretaing the container
+
+docker run -it --rm --name=containername -v volumename:/containervolumename imagename
+
+-it will provide interactive terminal
+--rm will delete the container when we exit from the container
+-v to mount the volume
+
+------
+to share the volume from one container to another while creting the container the below command we use
+
+docker run -it --rm --name=container2 --volumes-from container1 imagename  --------it will create the container2 by taking the volume from container1
+
+
+--------------------------------------------
+DOCKER NETWORKING
+
+
+----------------------------------
+DOCKER COMPOSE
+
+if we want to run multiple containers we use docker compose.it is a yaml file.the structure of file is below
+vi docker-compose.yaml
+
+version: '3'
+services:
+  container1:
+    image: mango
+    ports:
+      - 27017:27017
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=password
+    networks:
+      - netwrkname
+    restart: unless-stopped    ---it will restrat the container once it is stoppped
+  container2:
+    depends_on:
+      - container1      ----once the container1 created, it will cretae container2
+    image: mongo-express
+    ports:
+      - 8081:8081
+    environment:
+      - ME_CONFIG_MONGODB_ADMINUSERNAME=admin
+      - ME_CONFIG_MONGODB_ADMINPASSWORD=password
+      - ME_CONFIG_MONGODB_SERVER=mongodb
+volumes:
+  mongo-data:
+    driver: local
+
+
+if we dont give  any network for the above file, it will automatically connect these 2 conatiners with default bridge network
+
+docker-compose -f docker-compose.yaml up
+
+
+
+
