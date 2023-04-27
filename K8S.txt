@@ -81,8 +81,9 @@ MANUAL SCHEDULING: if incase no scedular present in our cluster,then created pod
 
 Annotataions in manifestfile:  will store buildversion,conatct details etc
 
-
-
+Pod Lifecycle:
+Tio get the pods which are in pending status:
+   kubectl get pods --field-selector=status.phase=pending
   
 
 for 1 pod 1 container
